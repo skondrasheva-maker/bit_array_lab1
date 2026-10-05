@@ -1,0 +1,13 @@
+cmake-build-*/
+build/
+bin/
+lib/
+out/
+.idea/
+*.iml
+.vscode/
+*.o
+*.obj
+*.exe
+*.a
+*.lib

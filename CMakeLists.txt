@@ -4,16 +4,17 @@ project(BitArrayLab LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-if (MSVC)
-    add_compile_options(/W4 /WX)
-else()
-    add_compile_options(-Wall -Wextra -Werror)
-endif()
-
 add_library(bit_array
     src/BitArray.cpp
 )
 target_include_directories(bit_array PUBLIC include)
+
+if (MSVC)
+    string(REGEX REPLACE "/W[0-3]" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    target_compile_options(bit_array PRIVATE /W4 /WX)
+else()
+    target_compile_options(bit_array PRIVATE -Wall -Wextra -Werror)
+endif()
 
 include(FetchContent)
 FetchContent_Declare(

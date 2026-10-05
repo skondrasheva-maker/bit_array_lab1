@@ -11,3 +11,4 @@ out/
 *.exe
 *.a
 *.lib
+.vs/

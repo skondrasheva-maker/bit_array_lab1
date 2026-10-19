@@ -177,3 +177,76 @@ void BitArray::resize(int num_bits, bool value) {
 		trim_unused_bits();
 	}
 }
+
+BitArray& BitArray::set(int n, bool val) {
+	if (n < 0 || n >= num_bits_) {
+		throw std::out_of_range("Bit index out of range");
+	}
+	int block_index = n / BITS_PER_BLOCK;
+	int bit_offset = n % BITS_PER_BLOCK;
+	BlockType mask = static_cast<BlockType>(1) << bit_offset;
+
+	if (val) {
+		data_[block_index] |= mask;
+	}
+	else {
+		data_[block_index] &= ~mask;
+	}
+	return *this;
+}
+
+BitArray& BitArray::set() {
+	if (capacity_blocks_ > 0) {
+		BlockType all_ones = ~static_cast<BlockType>(0);
+		for (int i = 0; i < capacity_blocks_; ++i) {
+			data_[i] = all_ones;
+		}
+		trim_unused_bits();
+	}
+	return *this;
+}
+
+BitArray& BitArray::reset(int n) {
+	return set(n, false);
+}
+
+BitArray& BitArray::reset() {
+	if (capacity_blocks_ > 0) {
+		for (int i = 0; i < capacity_blocks_; ++i) {
+			data_[i] = 0;
+		}
+	}
+	return *this;
+}
+
+bool BitArray::any() const { //хотя бы 1 бит 1 то тру
+	if (data_ == nullptr) return false;
+	for (int i = 0; i < capacity_blocks_; ++i) {
+		if (data_[i] != 0) return true;
+	}
+	return false;
+}
+
+bool BitArray::none() const { //тру если все биты 0
+	return !any();
+}
+
+BitArray BitArray::operator~() const {
+	BitArray result(*this);
+	for (int i = 0; i < result.capacity_blocks_; ++i) {
+		result.data_[i] = ~result.data_[i];
+	}
+	result.trim_unused_bits();
+	return result;
+}
+
+int BitArray::count() const {
+	if (data_ == nullptr) return 0;
+	int count = 0;
+	for (int i = 0; i < num_bits_; i++) {
+		if (this->operator[](i)) {
+			++count;
+		}
+	}
+	return count;
+}

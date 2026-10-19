@@ -31,5 +31,4 @@ add_executable(bit_array_tests
 )
 target_link_libraries(bit_array_tests PRIVATE bit_array GTest::gtest_main)
 
-include(GoogleTest)
-gtest_discover_tests(bit_array_tests)
+add_test(NAME bit_array_tests COMMAND bit_array_tests)

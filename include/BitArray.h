@@ -1,6 +1,5 @@
-#pragma once
-
 #include <string>
+#include <cstdint>
 
 class BitArray {
 public:

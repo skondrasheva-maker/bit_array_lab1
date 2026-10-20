@@ -131,6 +131,7 @@ void BitArray::resize(int num_bits, bool value) {
 	}
 	if (num_bits < num_bits_) {
 		num_bits_ = num_bits;
+		trim_unused_bits;
 	}
 	else {
 		int new_capacity = calculate_required_blocks(num_bits);
@@ -249,4 +250,100 @@ int BitArray::count() const {
 		}
 	}
 	return count;
+}
+
+//требование одинаковых размеров
+
+BitArray& BitArray::operator&=(const BitArray& b) {
+	if (num_bits_ != b.num_bits_) {
+		throw std::invalid_argument("Arrays must have the same size");
+	}
+	for (int i = 0; i < capacity_blocks_; i++) {
+		data_[i] &= b.data_[i]; 
+	}
+	return *this;
+}
+
+BitArray& BitArray::operator|=(const BitArray& b) {
+	if (num_bits_ != b.num_bits_) {
+		throw std::invalid_argument("Arrays must have the same size");
+	}
+	for (int i = 0; i < capacity_blocks_; i++) {
+		data_[i] |= b.data_[i];
+	}
+	return *this;
+}
+
+BitArray& BitArray::operator^=(const BitArray& b) {
+	if (num_bits_ != b.num_bits_) {
+		throw std::invalid_argument("Arrays must have the same size");
+	}
+	for (int i = 0; i < capacity_blocks_; i++) {
+		data_[i] ^= b.data_[i];
+	}
+	return *this;
+}
+
+BitArray& BitArray::operator<<=(int n) {
+	if (n < 0) {
+		throw std::invalid_argument("Shift amount cannot be negative");
+	}
+	if (n >= num_bits_) {
+		reset();
+		return *this;
+	}
+	if (n == 0) {
+		return *this;
+	}
+	BitArray temp(*this);
+	for (int i = 0; i < num_bits_; ++i) {
+		if (i + n < num_bits_) {
+			if (temp[i + n]) {
+				set(i, true);
+			} else {
+				set(i, false);
+			}
+		} else {
+			set(i, false);
+		}
+	 }
+	return *this;
+}
+
+BitArray& BitArray::operator>>=(int n) {
+	if (n < 0) {
+		throw std::invalid_argument("Shift amount cannot be negative");
+	}
+	if (n >= num_bits_) {
+		reset();
+		return *this;
+	}
+	if (n == 0) {
+		return *this;
+	}
+	BitArray temp(*this);
+	for (int i = 0; i < num_bits_; ++i) {
+		if (i >= n) {
+			if (temp[i - n]) {
+				set(i, true);
+			} else {
+				set(i, false);
+			}
+		} else {
+			set(i, false);
+		}
+	}
+	return *this;
+}
+
+BitArray BitArray::operator<<(int n) const {
+	BitArray result(*this);
+	result <<= n;
+	return result;
+}
+
+BitArray BitArray::operator>>(int n) const {
+	BitArray result(*this);
+	result >>= n;
+	return result;
 }

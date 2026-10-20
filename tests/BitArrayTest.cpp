@@ -224,3 +224,151 @@ TEST(BitArrayTest, CountMethod) {
     }
     EXPECT_EQ(c.count(), 50);
 }
+
+TEST(BitArrayTest, BitwiseAndAssign) {
+    BitArray a(8, 0b10110010);  
+    BitArray b(8, 0b11010110);  
+
+    a &= b;  //ожидаем:10010010
+
+    EXPECT_EQ(a[7], true);  
+    EXPECT_EQ(a[6], false); 
+    EXPECT_EQ(a[5], false);  
+    EXPECT_EQ(a[4], true); 
+    EXPECT_EQ(a[3], false);  
+    EXPECT_EQ(a[2], false);  
+    EXPECT_EQ(a[1], true);   
+    EXPECT_EQ(a[0], false);  
+
+    BitArray c(10, 0);
+    EXPECT_THROW(a &= c, std::invalid_argument);
+}
+
+TEST(BitArrayTest, BitwiseOrAssign) {
+    BitArray a(8, 0b10110010);  
+    BitArray b(8, 0b11010110);
+
+    a |= b;  //ожидаем: 11110110
+
+    EXPECT_EQ(a.count(), 6);  //шесть единиц
+
+    BitArray c(10, 0);
+    EXPECT_THROW(a |= c, std::invalid_argument);
+}
+
+TEST(BitArrayTest, BitwiseXorAssign) {//XOR
+    BitArray a(8, 0b10110010);  
+    BitArray b(8, 0b11010110);  
+
+    a ^= b;  //ожидаем: 01100100
+
+    EXPECT_EQ(a.count(), 3);  //три единицы
+
+    //XOR с самим собой должен дать все нули
+    BitArray c(8, 0b10101010);
+    c ^= c;
+    EXPECT_EQ(c.count(), 0);
+
+    BitArray d(10, 0);
+    EXPECT_THROW(a ^= d, std::invalid_argument);
+}
+
+TEST(BitArrayTest, LeftShiftAssign) {
+    BitArray a(8, 0b10110010); 
+
+    
+    a <<= 2;  //ожидаем: 11001000
+
+    EXPECT_EQ(a.count(), 3);  
+    EXPECT_EQ(a[7], true);    
+    EXPECT_EQ(a[6], true);    
+    EXPECT_EQ(a[5], false);   
+    EXPECT_EQ(a[4], false);   
+    EXPECT_EQ(a[3], true);    
+    EXPECT_EQ(a[2], false);   
+    EXPECT_EQ(a[1], false);   
+    EXPECT_EQ(a[0], false);   
+
+    //сдвиг на 0, ничего не меняется
+    BitArray b(8, 0b10101010);
+    b <<= 0;
+    EXPECT_EQ(b.count(), 4);
+
+    // сдвиг на размер массива, все биты становятся 0
+    BitArray c(8, 0b11111111);
+    c <<= 8;
+    EXPECT_EQ(c.count(), 0);
+
+    // Сдвиг больше размера, тоже все нули
+    BitArray d(8, 0b11111111);
+    d <<= 100;
+    EXPECT_EQ(d.count(), 0);
+
+    EXPECT_THROW(a <<= -1, std::invalid_argument);
+}
+
+TEST(BitArrayTest, RightShiftAssign) {
+    BitArray a(8, 0b10110010);  
+
+    a >>= 2;  //ожидаем: 00101100
+
+    EXPECT_EQ(a.count(), 3); 
+    EXPECT_EQ(a[7], false);   
+    EXPECT_EQ(a[6], false);  
+    EXPECT_EQ(a[5], true);    
+    EXPECT_EQ(a[4], false);   
+    EXPECT_EQ(a[3], true);   
+    EXPECT_EQ(a[2], true);    
+    EXPECT_EQ(a[1], false);  
+    EXPECT_EQ(a[0], false);   
+
+    BitArray b(8, 0b10101010);
+    b >>= 0;
+    EXPECT_EQ(b.count(), 4);
+
+    BitArray c(8, 0b11111111);
+    c >>= 8;
+    EXPECT_EQ(c.count(), 0);
+
+    EXPECT_THROW(a >>= -1, std::invalid_argument);
+}
+
+TEST(BitArrayTest, LeftShiftOperator) {
+    BitArray a(8, 0b10110010);  
+
+    BitArray b = a << 2;  //ожидаем: 11001000
+
+    //исходный массив не должен измениться
+    EXPECT_EQ(a.count(), 4);
+    EXPECT_EQ(a[7], true);
+    EXPECT_EQ(a[0], false);
+
+    //новый массив должен содержать результат
+    EXPECT_EQ(b.count(), 3);
+    EXPECT_EQ(b[7], true);
+    EXPECT_EQ(b[1], false);
+    EXPECT_EQ(b[0], false);
+}
+
+TEST(BitArrayTest, RightShiftOperator) {
+    BitArray a(8, 0b10110010); 
+
+    BitArray b = a >> 2;  //ожидаем: 00101100
+
+    EXPECT_EQ(a.count(), 4);
+
+    EXPECT_EQ(b.count(), 3);
+    EXPECT_EQ(b[7], false);
+    EXPECT_EQ(b[5], true);
+}
+
+TEST(BitArrayTest, ChainedBitwiseOperations) {
+    BitArray a(8, 0b11110000);
+    BitArray b(8, 0b10101010);
+    BitArray c(8, 0b11001100);
+
+    a &= b;  // 10100000
+    a ^= c;  // 01101100
+
+    EXPECT_EQ(a.count(), 4);
+}

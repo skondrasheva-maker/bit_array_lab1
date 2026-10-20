@@ -18,6 +18,9 @@ public:
     void clear();
     void push_back(bool bit);
 
+    friend bool operator==(const BitArray& a, const BitArray& b);
+    friend bool operator!=(const BitArray& a, const BitArray& b);
+
     BitArray& operator&=(const BitArray& b);
     BitArray& operator|=(const BitArray& b);
     BitArray& operator^=(const BitArray& b);

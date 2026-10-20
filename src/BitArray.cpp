@@ -1,6 +1,7 @@
 #include "BitArray.h"
 #include <algorithm>
 #include <stdexcept>
+#include <string>
 
 int BitArray::calculate_required_blocks(int num_bits) {
 	if (num_bits <= 0) {
@@ -131,7 +132,7 @@ void BitArray::resize(int num_bits, bool value) {
 	}
 	if (num_bits < num_bits_) {
 		num_bits_ = num_bits;
-		trim_unused_bits;
+		trim_unused_bits();
 	}
 	else {
 		int new_capacity = calculate_required_blocks(num_bits);
@@ -295,10 +296,10 @@ BitArray& BitArray::operator<<=(int n) {
 	if (n == 0) {
 		return *this;
 	}
-	BitArray temp(*this);
+	BitArray temp = *this;
 	for (int i = 0; i < num_bits_; ++i) {
-		if (i + n < num_bits_) {
-			if (temp[i + n]) {
+		if (i >= n) {
+			if (temp[i - n]) {
 				set(i, true);
 			} else {
 				set(i, false);
@@ -321,10 +322,10 @@ BitArray& BitArray::operator>>=(int n) {
 	if (n == 0) {
 		return *this;
 	}
-	BitArray temp(*this);
+	BitArray temp = *this;
 	for (int i = 0; i < num_bits_; ++i) {
-		if (i >= n) {
-			if (temp[i - n]) {
+		if (i + n < num_bits_) {
+			if (temp[i + n]) {
 				set(i, true);
 			} else {
 				set(i, false);
@@ -336,14 +337,43 @@ BitArray& BitArray::operator>>=(int n) {
 	return *this;
 }
 
-BitArray BitArray::operator<<(int n) const {
-	BitArray result(*this);
-	result <<= n;
+std::string BitArray::to_string() const {
+	std::string result;
+	result.reserve(num_bits_);
+	for (int i = num_bits_ - 1; i >= 0; --i) {
+		result += ((*this)[i] ? '1' : '0');
+	}
 	return result;
 }
 
+//== и != с помощью friend делаю свободными функциями тк оба операнда это просто параметры функции
+
+bool operator==(const BitArray& a, const BitArray& b) {
+	if (a.num_bits_ != b.num_bits_) {
+		return false;
+	}
+	for (int i = 0; i < a.capacity_blocks_; ++i) {
+		if (a.data_[i] != b.data_[i]) {
+			return false;
+		}
+	}
+	return true;
+}
+
+bool operator!=(const BitArray& a, const BitArray& b) {
+	return !(a == b);
+}
+
 BitArray BitArray::operator>>(int n) const {
-	BitArray result(*this);
+	BitArray result = *this;
 	result >>= n;
 	return result;
+
+}
+
+BitArray BitArray::operator<<(int n) const {
+	BitArray result = *this;
+	result <<= n;
+	return result;
+
 }

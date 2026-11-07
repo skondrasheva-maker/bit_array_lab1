@@ -18,7 +18,7 @@ TEST(BitArrayTest, BasicConstructorsAndSize) {
     BitArray b(a);
     EXPECT_EQ(b.size(), 10);
 
-    EXPECT_EQ(b[0], true);  // 5 = 101, 0-й бит = 1
+    EXPECT_EQ(b[0], true);  // 5 = 101
     EXPECT_EQ(b[1], false); 
     EXPECT_EQ(b[2], true); 
 

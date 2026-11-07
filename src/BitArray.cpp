@@ -3,6 +3,8 @@
 #include <stdexcept>
 #include <string>
 
+
+//обобщить
 int BitArray::calculate_required_blocks(int num_bits) {
 	if (num_bits <= 0) {
 		return 0;
@@ -47,7 +49,28 @@ void BitArray::trim_unused_bits() {
 		BlockType mask = (static_cast<BlockType>(1) << bits_in_last_block) - 1;
 		data_[last_block_index] &= mask;
 	}
+	for (int i = last_block_index + 1; i < capacity_blocks_; ++i) {
+		data_[i] = 0;
+	}
+}
 
+void BitArray::shrink_to_fit() {
+	int needed_blocks = calculate_required_blocks(num_bits_);
+
+	if (needed_blocks < capacity_blocks_) {
+		BlockType* new_data = nullptr;
+
+		if (needed_blocks > 0) {
+			new_data = new BlockType[needed_blocks];
+			for (int i = 0; i < needed_blocks; ++i) {
+				new_data[i] = data_[i];
+			}
+		}
+
+		delete[] data_;
+		data_ = new_data;
+		capacity_blocks_ = needed_blocks;
+	}
 }
 
 BitArray::BitArray(const BitArray& b) {
@@ -186,14 +209,8 @@ BitArray& BitArray::set(int n, bool val) {
 	}
 	int block_index = n / BITS_PER_BLOCK;
 	int bit_offset = n % BITS_PER_BLOCK;
-	BlockType mask = static_cast<BlockType>(1) << bit_offset;
+	set_bit_at(block_index, bit_offset, val);
 
-	if (val) {
-		data_[block_index] |= mask;
-	}
-	else {
-		data_[block_index] &= ~mask;
-	}
 	return *this;
 }
 
@@ -255,40 +272,62 @@ int BitArray::count() const {
 
 //требование одинаковых размеров
 
-BitArray& BitArray::operator&=(const BitArray& b) {
-	if (num_bits_ != b.num_bits_) {
+void BitArray::apply_bitwise_operation(const BitArray& b, BitwiseOp op) {
+	check_same_size(b);
+	for (int i = 0; i < capacity_blocks_; ++i) {
+		switch (op) {
+		case BitwiseOp::AND:
+			data_[i] &= b.data_[i];
+			break;
+		case BitwiseOp::OR:
+			data_[i] |= b.data_[i];
+			break;
+		case BitwiseOp::XOR:
+			data_[i] ^= b.data_[i];
+			break;
+		}
+	}
+}
+
+void BitArray::check_same_size(const BitArray& other) const {
+	if (num_bits_ != other.num_bits_) {
 		throw std::invalid_argument("Arrays must have the same size");
 	}
-	for (int i = 0; i < capacity_blocks_; i++) {
-		data_[i] &= b.data_[i]; 
+}
+
+void BitArray::check_shift_amount(int n) const {
+	if (n < 0) {
+		throw std::invalid_argument("Shift amount cannot be negative");
 	}
+}
+
+void BitArray::set_bit_at(int block_index, int bit_offset, bool value) {
+	BlockType mask = static_cast<BlockType>(1) << bit_offset;
+	if (value) {
+		data_[block_index] |= mask;
+	}
+	else {
+		data_[block_index] &= ~mask;
+	}
+}
+
+BitArray& BitArray::operator&=(const BitArray& b) {
+	apply_bitwise_operation(b, BitwiseOp::AND);
 	return *this;
 }
 
 BitArray& BitArray::operator|=(const BitArray& b) {
-	if (num_bits_ != b.num_bits_) {
-		throw std::invalid_argument("Arrays must have the same size");
-	}
-	for (int i = 0; i < capacity_blocks_; i++) {
-		data_[i] |= b.data_[i];
-	}
+	apply_bitwise_operation(b, BitwiseOp::OR);
 	return *this;
 }
 
 BitArray& BitArray::operator^=(const BitArray& b) {
-	if (num_bits_ != b.num_bits_) {
-		throw std::invalid_argument("Arrays must have the same size");
-	}
-	for (int i = 0; i < capacity_blocks_; i++) {
-		data_[i] ^= b.data_[i];
-	}
+	apply_bitwise_operation(b, BitwiseOp::XOR);
 	return *this;
 }
 
 BitArray& BitArray::operator<<=(int n) {
-	if (n < 0) {
-		throw std::invalid_argument("Shift amount cannot be negative");
-	}
+	check_shift_amount(n);
 	if (n >= num_bits_) {
 		reset();
 		return *this;
@@ -299,22 +338,16 @@ BitArray& BitArray::operator<<=(int n) {
 	BitArray temp = *this;
 	for (int i = 0; i < num_bits_; ++i) {
 		if (i >= n) {
-			if (temp[i - n]) {
-				set(i, true);
+			set_bit_at(i / BITS_PER_BLOCK, i % BITS_PER_BLOCK, temp[i - n]);
 			} else {
-				set(i, false);
+			set_bit_at(i / BITS_PER_BLOCK, i % BITS_PER_BLOCK, false);
 			}
-		} else {
-			set(i, false);
-		}
-	 }
+		} 
 	return *this;
 }
 
 BitArray& BitArray::operator>>=(int n) {
-	if (n < 0) {
-		throw std::invalid_argument("Shift amount cannot be negative");
-	}
+	check_shift_amount(n);
 	if (n >= num_bits_) {
 		reset();
 		return *this;
@@ -325,13 +358,9 @@ BitArray& BitArray::operator>>=(int n) {
 	BitArray temp = *this;
 	for (int i = 0; i < num_bits_; ++i) {
 		if (i + n < num_bits_) {
-			if (temp[i + n]) {
-				set(i, true);
+			set_bit_at(i / BITS_PER_BLOCK, i % BITS_PER_BLOCK, temp[i + n]);
 			} else {
-				set(i, false);
-			}
-		} else {
-			set(i, false);
+			set_bit_at(i / BITS_PER_BLOCK, i % BITS_PER_BLOCK, false);
 		}
 	}
 	return *this;

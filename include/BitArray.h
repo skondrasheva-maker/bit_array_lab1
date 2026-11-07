@@ -53,8 +53,15 @@ private:
     int num_bits_ = 0;
     int capacity_blocks_ = 0;
 
+    enum class BitwiseOp { AND, OR, XOR };
+
     static int calculate_required_blocks(int num_bits);
     void trim_unused_bits();
+    void shrink_to_fit();
+    void check_same_size(const BitArray& other) const;
+    void apply_bitwise_operation(const BitArray& b, BitwiseOp op);
+    void check_shift_amount(int n) const;
+    void set_bit_at(int block_index, int bit_offset, bool value);
 };
 
 bool operator==(const BitArray& a, const BitArray& b);
